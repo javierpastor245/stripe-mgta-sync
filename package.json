@@ -1,0 +1,26 @@
+{
+  "name": "stripe-mgta-sync",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/javierpastor245/stripe-mgta-sync.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/javierpastor245/stripe-mgta-sync/issues"
+  },
+  "homepage": "https://github.com/javierpastor245/stripe-mgta-sync#readme",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
+    "googleapis": "^149.0.0",
+    "stripe": "^18.1.1"
+  }
+}
