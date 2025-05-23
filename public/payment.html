@@ -37,8 +37,6 @@
         pax: localStorage.getItem("pax"),
       };
 
-      let elements; // Declaramos fuera para usarla después
-
       async function init() {
         try {
           const res = await fetch("/crear-intento", {
@@ -48,10 +46,9 @@
           });
 
           const { clientSecret } = await res.json();
-
           console.log("🔐 Client Secret recibido:", clientSecret);
 
-          elements = stripe.elements({
+          const elements = stripe.elements({
             clientSecret,
             appearance: {
               theme: "stripe",
@@ -65,6 +62,29 @@
           const paymentElement = elements.create("payment");
           paymentElement.mount("#payment-element");
 
+          // ✅ Mover este bloque dentro para que `elements` exista aquí
+          document.getElementById("pay-button").addEventListener("click", async () => {
+            const result = await stripe.confirmPayment({
+              elements,
+              confirmParams: {
+                return_url: window.location.href
+              },
+              redirect: 'if_required'
+            });
+
+            if (result.error) {
+              document.getElementById("payment-status").textContent = "❌ " + result.error.message;
+            } else if (result.paymentIntent.status === "succeeded") {
+              await fetch("/registrar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datosUsuario)
+              });
+
+              document.getElementById("payment-status").textContent = "✅ Pago realizado y reserva guardada.";
+            }
+          });
+
         } catch (error) {
           console.error("❌ Error al inicializar el pago:", error);
           const statusDiv = document.getElementById("payment-status");
@@ -73,33 +93,6 @@
           }
         }
       }
-
-      document.getElementById("pay-button").addEventListener("click", async () => {
-        try {
-          const result = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-              return_url: window.location.href
-            },
-            redirect: 'if_required'
-          });
-
-          if (result.error) {
-            document.getElementById("payment-status").textContent = result.error.message;
-          } else if (result.paymentIntent.status === "succeeded") {
-            await fetch("/registrar", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(datosUsuario)
-            });
-
-            document.getElementById("payment-status").textContent = "✅ Pago realizado y reserva guardada.";
-          }
-        } catch (err) {
-          console.error("❌ Error durante el proceso de confirmación:", err);
-          document.getElementById("payment-status").textContent = "❌ Error al procesar el pago.";
-        }
-      });
 
       init();
     </script>

@@ -43,7 +43,7 @@ app.post('/crear-intento', async (req, res) => {
     res.send({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
     console.error('❌ Error creando PaymentIntent:', error);
-    res.status(500).send('Error creando el intento de pago');
+    res.status(500).send({ error: 'Error creando el intento de pago', details: error.message });
   }
 });
 
@@ -67,7 +67,7 @@ app.post('/registrar', async (req, res) => {
     res.send({ message: 'Registro guardado correctamente' });
   } catch (error) {
     console.error('❌ Error guardando en la hoja:', error);
-    res.status(500).send('Error al guardar en la hoja');
+    res.status(500).send({ error: 'Error al guardar en la hoja', details: error.message });
   }
 });
 
