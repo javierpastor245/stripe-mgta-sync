@@ -54,7 +54,6 @@ app.post('/crear-intento', async (req, res) => {
   }
 });
 
-
 // 👉 Endpoint para registrar en Google Sheets tras pago exitoso
 app.post('/registrar', async (req, res) => {
   const { nombre, email, discoteca, fecha, pax } = req.body;
