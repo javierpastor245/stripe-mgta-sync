@@ -6,9 +6,9 @@ const { google } = require('googleapis');
 const fs = require('fs');
 const axios = require('axios');
 const path = require('path');
-app.use(cors());
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.static('public')); // Para servir archivos como payment.html
 app.get('/payment.html', (req, res) => {
