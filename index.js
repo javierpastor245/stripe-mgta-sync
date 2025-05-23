@@ -44,6 +44,7 @@ app.post('/crear-intento', async (req, res) => {
       }
     });
 
+    
     res.send({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
     console.error('❌ Error creando PaymentIntent:', error);
