@@ -59,16 +59,26 @@ app.post('/procesar-pago', async (req, res) => {
 
 // NUEVO endpoint para Stripe Elements
 app.post('/crear-intento', async (req, res) => {
+  const { nombre, email, discoteca, fecha, pax } = req.body;
+
   try {
+    const cantidad = parseInt(pax) * 100; // 1 € por persona en céntimos
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 100, // en céntimos (1 €)
+      amount: cantidad,
       currency: 'eur',
-      automatic_payment_methods: { enabled: true },
+      description: `Entrada Erasmus - ${discoteca}`,
+      metadata: {
+        nombre,
+        email,
+        fecha,
+        pax,
+      },
     });
 
     res.send({ clientSecret: paymentIntent.client_secret });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error('Error creando PaymentIntent:', error);
     res.status(500).send('Error creando el intento de pago');
   }
 });
