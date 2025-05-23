@@ -9,6 +9,13 @@
         font-family: Arial, sans-serif;
         padding: 40px;
         text-align: center;
+        background-color: #fff;
+      }
+
+      h2 {
+        color: #111;
+        font-size: 24px;
+        margin-bottom: 20px;
       }
 
       #express-checkout-element {
@@ -18,6 +25,7 @@
 
       #payment-status {
         margin-top: 20px;
+        font-weight: bold;
         color: green;
       }
     </style>
@@ -35,40 +43,46 @@
         email: localStorage.getItem("email") || "email@prueba.com",
         discoteca: localStorage.getItem("discoteca") || "Akuarela",
         fecha: localStorage.getItem("fecha") || "2025-06-01",
-        pax: localStorage.getItem("pax") || "1"
+        pax: parseInt(localStorage.getItem("pax") || "1")
       };
 
       async function init() {
-        const res = await fetch("/crear-intento", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(datosUsuario)
-        });
+        try {
+          const res = await fetch("/crear-intento", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datosUsuario)
+          });
 
-        const { clientSecret } = await res.json();
+          const { clientSecret } = await res.json();
 
-        const appearance = {
-          theme: 'stripe',
-          variables: {
-            borderRadius: '8px',
-            colorPrimary: '#b72218'
-          }
-        };
+          const appearance = {
+            theme: 'stripe',
+            variables: {
+              borderRadius: '8px',
+              colorPrimary: '#b72218'
+            }
+          };
 
-        const expressCheckoutOptions = {
-          buttonHeight: 50,
-          buttonTheme: {
-            applePay: 'black' // puedes usar white-outline si prefieres
-          }
-        };
+          const expressCheckoutOptions = {
+            buttonHeight: 50,
+            buttonTheme: {
+              applePay: 'black',
+              googlePay: 'dark'
+            }
+          };
 
-        const elements = stripe.elements({
-          clientSecret,
-          appearance
-        });
+          const elements = stripe.elements({
+            clientSecret,
+            appearance
+          });
 
-        const expressCheckoutElement = elements.create('expressCheckout', expressCheckoutOptions);
-        expressCheckoutElement.mount('#express-checkout-element');
+          const expressCheckoutElement = elements.create('expressCheckout', expressCheckoutOptions);
+          expressCheckoutElement.mount('#express-checkout-element');
+        } catch (error) {
+          document.getElementById("payment-status").textContent = "Error al inicializar el pago.";
+          console.error("Stripe init error:", error);
+        }
       }
 
       init();
