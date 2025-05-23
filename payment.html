@@ -48,7 +48,7 @@
 
       async function init() {
         try {
-          const res = await fetch("/crear-intento", {
+            const res = await fetch("https://stripe-mgta-sync.onrender.com/crear-intento", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(datosUsuario)

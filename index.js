@@ -5,6 +5,8 @@ const { google } = require('googleapis');
 const fs = require('fs');
 const axios = require('axios');
 const path = require('path');
+const cors = require('cors');
+app.use(cors());
 
 const app = express();
 app.use(express.json());
