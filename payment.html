@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pago Erasmus</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 40px;
+        text-align: center;
+      }
+      #payment-element {
+        margin: 40px auto;
+        max-width: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Selecciona tu método de pago</h2>
+    <div id="payment-element"></div>
+    <button id="pay-button">Pagar ahora</button>
+
+    <script>
+      const stripe = Stripe("k_test_51QS7QPGmMy7u2HjHPMq2xgzDY6bbfN4lXoFMYC8sNBOCuW8X5n79Wq3wZQ7cCx9ROQSEVgkt7mHSixXY9GTMzVJx00KDvBwdC");
+
+      const datosUsuario = {
+        nombre: localStorage.getItem("nombre") || "Nombre Prueba",
+        email: localStorage.getItem("email") || "email@prueba.com",
+        discoteca: localStorage.getItem("discoteca") || "Akuarela",
+        fecha: localStorage.getItem("fecha") || "2025-06-01",
+        pax: localStorage.getItem("pax") || "1"
+      };
+
+      async function init() {
+        const res = await fetch("/crear-intento", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datosUsuario)
+        });
+
+        const { clientSecret } = await res.json();
+
+        const elements = stripe.elements({
+          clientSecret,
+          appearance: {
+            theme: "stripe",
+            variables: {
+              colorPrimary: "#b72218",
+              borderRadius: "8px"
+            }
+          }
+        });
+
+        const paymentElement = elements.create("payment");
+        paymentElement.mount("#payment-element");
+
+        document
+          .getElementById("pay-button")
+          .addEventListener("click", async () => {
+            const result = await stripe.confirmPayment({
+              elements,
+              confirmParams: {
+                return_url: "https://informervalencia.com/success"
+              }
+            });
+
+            if (result.error) {
+              alert(result.error.message);
+            }
+          });
+      }
+
+      init();
+    </script>
+  </body>
+</html>

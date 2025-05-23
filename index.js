@@ -4,11 +4,15 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { google } = require('googleapis');
 const fs = require('fs');
 const axios = require('axios');
+const path = require('path');
+
 const app = express();
 app.use(express.json());
+app.use(express.static('public')); // Para servir archivos como payment.html
 
 const PORT = process.env.PORT || 3000;
 
+// Configuración de Google Sheets
 const auth = new google.auth.GoogleAuth({
   keyFile: './hojacalculoerasmus-cf910feb1889.json',
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -17,14 +21,18 @@ const auth = new google.auth.GoogleAuth({
 const SHEET_ID = '1xFRz3usk5cQx51iime3VAYATKpXczI170PKYvyQPBRk';
 const SHEET_NAME = 'Página1';
 
+// Ruta principal
 app.get('/', (req, res) => {
   res.send('Servidor activo');
 });
 
+// Ruta original para Checkout clásico
 app.post('/procesar-pago', async (req, res) => {
   const { nombre, email, discoteca, fecha, pax } = req.body;
 
   try {
+    const cantidad = parseInt(pax) * 100; // pax x 1 € = total en céntimos
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
@@ -33,7 +41,7 @@ app.post('/procesar-pago', async (req, res) => {
           product_data: {
             name: `Entrada Erasmus - ${discoteca}`,
           },
-          unit_amount: 100,
+          unit_amount: cantidad, // total dinámico
         },
         quantity: 1,
       }],
@@ -46,6 +54,22 @@ app.post('/procesar-pago', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('Error procesando el pago');
+  }
+});
+
+// NUEVO endpoint para Stripe Elements
+app.post('/crear-intento', async (req, res) => {
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: 100, // en céntimos (1 €)
+      currency: 'eur',
+      automatic_payment_methods: { enabled: true },
+    });
+
+    res.send({ clientSecret: paymentIntent.client_secret });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error creando el intento de pago');
   }
 });
 
