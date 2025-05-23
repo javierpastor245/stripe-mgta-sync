@@ -9,6 +9,9 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 app.use(express.static('public')); // Para servir archivos como payment.html
+app.get('/payment.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'payment.html'));
+});
 
 const PORT = process.env.PORT || 3000;
 
