@@ -4,70 +4,28 @@ const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { google } = require('googleapis');
 const fs = require('fs');
-const axios = require('axios');
-const path = require('path');
 
 const app = express();
 app.use(cors());
+app.use(express.static('public'));
 app.use(express.json());
-app.use(express.static('public')); // Para servir archivos como payment.html
-app.get('/payment.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'payment.html'));
-});
 
 const PORT = process.env.PORT || 3000;
 
-// Configuración de Google Sheets
+// Google Sheets Auth
 const auth = new google.auth.GoogleAuth({
   keyFile: './hojacalculoerasmus-cf910feb1889.json',
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
-
 const SHEET_ID = '1xFRz3usk5cQx51iime3VAYATKpXczI170PKYvyQPBRk';
 const SHEET_NAME = 'Página1';
 
-// Ruta principal
-app.get('/', (req, res) => {
-  res.send('Servidor activo');
-});
-
-// Ruta original para Checkout clásico
-app.post('/procesar-pago', async (req, res) => {
-  const { nombre, email, discoteca, fecha, pax } = req.body;
-
-  try {
-    const cantidad = parseInt(pax) * 100; // pax x 1 € = total en céntimos
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: `Entrada Erasmus - ${discoteca}`,
-          },
-          unit_amount: cantidad, // total dinámico
-        },
-        quantity: 1,
-      }],
-      mode: 'payment',
-      success_url: 'https://informervalencia.com/success',
-      cancel_url: 'https://informervalencia.com/cancel',
-    });
-
-    res.json({ url: session.url });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error procesando el pago');
-  }
-});
-
-// NUEVO endpoint para Stripe Elements
+// 👉 Endpoint para crear intento de pago
 app.post('/crear-intento', async (req, res) => {
   const { nombre, email, discoteca, fecha, pax } = req.body;
 
   try {
-    const cantidad = parseInt(pax) * 100; // 1 € por persona en céntimos
+    const cantidad = parseInt(pax) * 100;
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: cantidad,
@@ -76,18 +34,48 @@ app.post('/crear-intento', async (req, res) => {
       metadata: {
         nombre,
         email,
+        discoteca,
         fecha,
-        pax,
-      },
+        pax
+      }
     });
 
     res.send({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    console.error('Error creando PaymentIntent:', error);
+    console.error('❌ Error creando PaymentIntent:', error);
     res.status(500).send('Error creando el intento de pago');
   }
 });
 
+// 👉 Endpoint para registrar en Google Sheets tras pago exitoso
+app.post('/registrar', async (req, res) => {
+  const { nombre, email, discoteca, fecha, pax } = req.body;
+
+  try {
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A1`,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[nombre, email, discoteca, fecha, pax, new Date().toLocaleString()]],
+      },
+    });
+
+    res.send({ message: 'Registro guardado correctamente' });
+  } catch (error) {
+    console.error('❌ Error guardando en la hoja:', error);
+    res.status(500).send('Error al guardar en la hoja');
+  }
+});
+
+// 🟢 Confirmación
+app.get('/', (req, res) => {
+  res.send('Servidor activo');
+});
+
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
 });
