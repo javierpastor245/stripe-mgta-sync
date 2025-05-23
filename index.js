@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+console.log("🔐 Clave secreta de Stripe:", process.env.STRIPE_SECRET_KEY);
 const { google } = require('googleapis');
 const fs = require('fs');
 
@@ -25,7 +26,10 @@ app.post('/crear-intento', async (req, res) => {
   const { nombre, email, discoteca, fecha, pax } = req.body;
 
   try {
-    const cantidad = parseInt(pax) * 100;
+    const cantidad = Number(pax) * 100;
+    if (isNaN(cantidad)) {
+    return res.status(400).send({ error: 'Cantidad inválida', details: 'El campo pax no es un número válido' });
+    }
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: cantidad,

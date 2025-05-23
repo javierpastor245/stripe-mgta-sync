@@ -36,7 +36,8 @@
         fecha: localStorage.getItem("fecha"),
         pax: localStorage.getItem("pax"),
       };
-
+      console.log("📦 Datos usuario:", datosUsuario); // 👈 REVISAR ESTO EN LA CONSOLA
+      
       async function init() {
         try {
           const res = await fetch("/crear-intento", {
