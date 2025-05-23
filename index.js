@@ -24,12 +24,15 @@ const SHEET_NAME = 'Página1';
 // 👉 Endpoint para crear intento de pago
 app.post('/crear-intento', async (req, res) => {
   const { nombre, email, discoteca, fecha, pax } = req.body;
-
+  console.log("📥 Datos recibidos en /crear-intento:", req.body);
+  
   try {
-    const cantidad = Number(pax) * 100;
-    if (isNaN(cantidad)) {
-    return res.status(400).send({ error: 'Cantidad inválida', details: 'El campo pax no es un número válido' });
+    const paxNum = parseInt(pax, 10);
+    if (isNaN(paxNum) || paxNum <= 0) {
+      return res.status(400).send({ error: 'Cantidad inválida', details: `Valor de pax no válido: ${pax}` });
     }
+
+    const cantidad = paxNum * 100;
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: cantidad,
@@ -44,13 +47,13 @@ app.post('/crear-intento', async (req, res) => {
       }
     });
 
-    
     res.send({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
     console.error('❌ Error creando PaymentIntent:', error);
     res.status(500).send({ error: 'Error creando el intento de pago', details: error.message });
   }
 });
+
 
 // 👉 Endpoint para registrar en Google Sheets tras pago exitoso
 app.post('/registrar', async (req, res) => {
